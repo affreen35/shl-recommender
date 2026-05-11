@@ -1,8 +1,6 @@
 fastapi
 uvicorn[standard]
 pydantic
-sentence-transformers
-numpy
 groq
 httpx
 python-dotenv
