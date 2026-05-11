@@ -10,7 +10,10 @@ load_dotenv()
 app = FastAPI()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-with open(os.path.join(os.path.dirname(__file__), "../data/catalog.json")) as f:
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CATALOG_PATH = os.path.join(BASE_DIR, "..", "data", "catalog.json")
+
+with open(CATALOG_PATH) as f:
     CATALOG = json.load(f)
 
 CATALOG_TEXT = "\n".join([
@@ -52,13 +55,13 @@ Respond ONLY in this exact JSON format:
 
 @app.get("/health")
 def health():
-    return {{"status": "ok"}}
+    return {"status": "ok"}
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    messages = [{{"role": "system", "content": SYSTEM_PROMPT}}]
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     for m in request.messages:
-        messages.append({{"role": m.role, "content": m.content}})
+        messages.append({"role": m.role, "content": m.content})
     try:
         response = client.chat.completions.create(
             model="llama3-70b-8192",
@@ -69,7 +72,7 @@ async def chat(request: ChatRequest):
         text = response.choices[0].message.content.strip()
         text = re.sub(r'^```json|```$', '', text, flags=re.MULTILINE).strip()
         data = json.loads(text)
-        valid_urls = {{item['url'] for item in CATALOG}}
+        valid_urls = {item['url'] for item in CATALOG}
         recs = [r for r in data.get("recommendations", []) if r.get("url") in valid_urls]
         return ChatResponse(
             reply=data.get("reply", ""),
